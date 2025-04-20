@@ -2473,7 +2473,7 @@ class AsyncScrapybara:
                 for part in tool_calls:
                     tool = next(t for t in current_tools if t.name == part.tool_name)
                     try:
-                        if tool.name == "structured_output" and schema:
+                        if tool.name == "structured_output":
                             has_structured_output = True
                         raw_result = tool(**part.args)
                         if inspect.isawaitable(raw_result):
