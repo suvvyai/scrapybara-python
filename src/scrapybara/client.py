@@ -1774,7 +1774,7 @@ class Scrapybara:
                 # If a schema is provided and system matches one of our default prompts, add structured output section
                 if system is not None:
                     if model.provider == "anthropic":
-                        from .anthropic import (
+                        from scrapybara.anthropic import (
                             UBUNTU_SYSTEM_PROMPT,
                             BROWSER_SYSTEM_PROMPT,
                             WINDOWS_SYSTEM_PROMPT,
@@ -1788,7 +1788,7 @@ class Scrapybara:
                             )
 
                     elif model.provider == "openai":
-                        from .openai import (
+                        from scrapybara.openai import (
                             UBUNTU_SYSTEM_PROMPT,
                             BROWSER_SYSTEM_PROMPT,
                             WINDOWS_SYSTEM_PROMPT,
