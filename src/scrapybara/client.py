@@ -22,10 +22,10 @@ from pydantic import ConfigDict
 
 from scrapybara.core.http_client import AsyncHttpClient, HttpClient
 from scrapybara.environment import ScrapybaraEnvironment
-from .core.request_options import RequestOptions
-from .core.api_error import ApiError
-from .core import File
-from .types import (
+from scrapybara.core.request_options import RequestOptions
+from scrapybara.core.api_error import ApiError
+from scrapybara.core import File
+from scrapybara.types import (
     Action,
     AuthStateResponse,
     BrowserAuthenticateResponse,
@@ -51,7 +51,7 @@ from .types import (
     UploadResponse,
 )
 
-from .types.act import (
+from scrapybara.types.act import (
     SingleActRequest,
     SingleActResponse,
     Message,
@@ -69,8 +69,8 @@ from .types.act import (
     ActResponse,
     TokenUsage,
 )
-from .base_client import BaseClient, AsyncBaseClient
-from .instance.types import (
+from scrapybara.base_client import BaseClient, AsyncBaseClient
+from scrapybara.instance.types import (
     Command,
     Request_MoveMouse,
     Request_ClickMouse,
@@ -82,7 +82,7 @@ from .instance.types import (
     Request_TakeScreenshot,
     Request_GetCursorPosition,
 )
-from .types import (
+from scrapybara.types import (
     MoveMouseAction,
     ClickMouseAction,
     DragMouseAction,
