@@ -6,8 +6,6 @@ from typing import (
     Dict,
     List,
     Sequence,
-    Type,
-    TypeVar,
     Union,
     Generator,
     Callable,
@@ -20,7 +18,7 @@ import os
 import warnings
 
 import httpx
-from pydantic import BaseModel, ConfigDict
+from pydantic import ConfigDict
 
 from scrapybara.core.http_client import AsyncHttpClient, HttpClient
 from scrapybara.environment import ScrapybaraEnvironment
@@ -51,7 +49,6 @@ from .types import (
     StopInstanceResponse,
     ModifyBrowserAuthResponse,
     UploadResponse,
-    FileResponse,
 )
 
 from .types.act import (
@@ -98,26 +95,22 @@ from .types import (
 )
 
 OMIT = typing.cast(typing.Any, ...)
-SchemaT = TypeVar("SchemaT", bound=BaseModel)
 
 
 class StructuredOutputTool(Tool):
     """A tool that allows the agent to output structured data."""
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
-    _model: Type[BaseModel]
 
-    def __init__(self, model: Type[BaseModel]):
+    def __init__(self, schema: Dict[str, Any]):
         super().__init__(
             name="structured_output",
             description="Output structured data according to the provided schema parameters. Only use this tool at the end of your task. The output data is final and will be passed directly back to the user.",
-            parameters=model,
+            parameters=schema,
         )
-        self._model = model
 
     def __call__(self, **kwargs: Any) -> Dict[str, Any]:
-        validated = self._model.model_validate(kwargs)
-        return validated.model_dump()
+        return kwargs
 
 
 class Browser:
@@ -125,26 +118,14 @@ class Browser:
         self.instance_id = instance_id
         self._client = client
 
-    def start(
-        self, request_options: Optional[RequestOptions] = None
-    ) -> StartBrowserResponse:
-        return self._client.browser.start(
-            self.instance_id, request_options=request_options
-        )
+    def start(self, request_options: Optional[RequestOptions] = None) -> StartBrowserResponse:
+        return self._client.browser.start(self.instance_id, request_options=request_options)
 
-    def get_cdp_url(
-        self, request_options: Optional[RequestOptions] = None
-    ) -> BrowserGetCdpUrlResponse:
-        return self._client.browser.get_cdp_url(
-            self.instance_id, request_options=request_options
-        )
-    
-    def get_current_url(
-        self, request_options: Optional[RequestOptions] = None
-    ) -> BrowserGetCurrentUrlResponse:
-        return self._client.browser.get_current_url(
-            self.instance_id, request_options=request_options
-        )
+    def get_cdp_url(self, request_options: Optional[RequestOptions] = None) -> BrowserGetCdpUrlResponse:
+        return self._client.browser.get_cdp_url(self.instance_id, request_options=request_options)
+
+    def get_current_url(self, request_options: Optional[RequestOptions] = None) -> BrowserGetCurrentUrlResponse:
+        return self._client.browser.get_current_url(self.instance_id, request_options=request_options)
 
     def save_auth(
         self,
@@ -152,9 +133,7 @@ class Browser:
         name: Optional[str] = None,
         request_options: Optional[RequestOptions] = None,
     ) -> SaveBrowserAuthResponse:
-        return self._client.browser.save_auth(
-            self.instance_id, name=name, request_options=request_options
-        )
+        return self._client.browser.save_auth(self.instance_id, name=name, request_options=request_options)
 
     def modify_auth(
         self,
@@ -179,12 +158,8 @@ class Browser:
             request_options=request_options,
         )
 
-    def stop(
-        self, request_options: Optional[RequestOptions] = None
-    ) -> StopBrowserResponse:
-        return self._client.browser.stop(
-            self.instance_id, request_options=request_options
-        )
+    def stop(self, request_options: Optional[RequestOptions] = None) -> StopBrowserResponse:
+        return self._client.browser.stop(self.instance_id, request_options=request_options)
 
 
 class AsyncBrowser:
@@ -192,26 +167,14 @@ class AsyncBrowser:
         self.instance_id = instance_id
         self._client = client
 
-    async def start(
-        self, request_options: Optional[RequestOptions] = None
-    ) -> StartBrowserResponse:
-        return await self._client.browser.start(
-            self.instance_id, request_options=request_options
-        )
+    async def start(self, request_options: Optional[RequestOptions] = None) -> StartBrowserResponse:
+        return await self._client.browser.start(self.instance_id, request_options=request_options)
 
-    async def get_cdp_url(
-        self, request_options: Optional[RequestOptions] = None
-    ) -> BrowserGetCdpUrlResponse:
-        return await self._client.browser.get_cdp_url(
-            self.instance_id, request_options=request_options
-        )
-    
-    async def get_current_url(
-        self, request_options: Optional[RequestOptions] = None
-    ) -> BrowserGetCurrentUrlResponse:
-        return await self._client.browser.get_current_url(
-            self.instance_id, request_options=request_options
-        )
+    async def get_cdp_url(self, request_options: Optional[RequestOptions] = None) -> BrowserGetCdpUrlResponse:
+        return await self._client.browser.get_cdp_url(self.instance_id, request_options=request_options)
+
+    async def get_current_url(self, request_options: Optional[RequestOptions] = None) -> BrowserGetCurrentUrlResponse:
+        return await self._client.browser.get_current_url(self.instance_id, request_options=request_options)
 
     async def save_auth(
         self,
@@ -219,9 +182,7 @@ class AsyncBrowser:
         name: Optional[str] = None,
         request_options: Optional[RequestOptions] = None,
     ) -> SaveBrowserAuthResponse:
-        return await self._client.browser.save_auth(
-            self.instance_id, name=name, request_options=request_options
-        )
+        return await self._client.browser.save_auth(self.instance_id, name=name, request_options=request_options)
 
     async def modify_auth(
         self,
@@ -246,12 +207,8 @@ class AsyncBrowser:
             request_options=request_options,
         )
 
-    async def stop(
-        self, request_options: Optional[RequestOptions] = None
-    ) -> StopBrowserResponse:
-        return await self._client.browser.stop(
-            self.instance_id, request_options=request_options
-        )
+    async def stop(self, request_options: Optional[RequestOptions] = None) -> StopBrowserResponse:
+        return await self._client.browser.stop(self.instance_id, request_options=request_options)
 
 
 class Code:
@@ -303,12 +260,8 @@ class Notebook:
         self.instance_id = instance_id
         self._client = client
 
-    def list_kernels(
-        self, request_options: Optional[RequestOptions] = None
-    ) -> List[KernelInfo]:
-        return self._client.notebook.list_kernels(
-            self.instance_id, request_options=request_options
-        )
+    def list_kernels(self, request_options: Optional[RequestOptions] = None) -> List[KernelInfo]:
+        return self._client.notebook.list_kernels(self.instance_id, request_options=request_options)
 
     def create(
         self,
@@ -324,19 +277,11 @@ class Notebook:
             request_options=request_options,
         )
 
-    def get(
-        self, notebook_id: str, request_options: Optional[RequestOptions] = None
-    ) -> NotebookType:
-        return self._client.notebook.get(
-            self.instance_id, notebook_id, request_options=request_options
-        )
+    def get(self, notebook_id: str, request_options: Optional[RequestOptions] = None) -> NotebookType:
+        return self._client.notebook.get(self.instance_id, notebook_id, request_options=request_options)
 
-    def delete(
-        self, notebook_id: str, request_options: Optional[RequestOptions] = None
-    ) -> None:
-        self._client.notebook.delete(
-            self.instance_id, notebook_id, request_options=request_options
-        )
+    def delete(self, notebook_id: str, request_options: Optional[RequestOptions] = None) -> None:
+        self._client.notebook.delete(self.instance_id, notebook_id, request_options=request_options)
 
     def add_cell(
         self,
@@ -392,12 +337,8 @@ class AsyncNotebook:
         self.instance_id = instance_id
         self._client = client
 
-    async def list_kernels(
-        self, request_options: Optional[RequestOptions] = None
-    ) -> List[KernelInfo]:
-        return await self._client.notebook.list_kernels(
-            self.instance_id, request_options=request_options
-        )
+    async def list_kernels(self, request_options: Optional[RequestOptions] = None) -> List[KernelInfo]:
+        return await self._client.notebook.list_kernels(self.instance_id, request_options=request_options)
 
     async def create(
         self,
@@ -413,19 +354,11 @@ class AsyncNotebook:
             request_options=request_options,
         )
 
-    async def get(
-        self, notebook_id: str, request_options: Optional[RequestOptions] = None
-    ) -> NotebookType:
-        return await self._client.notebook.get(
-            self.instance_id, notebook_id, request_options=request_options
-        )
+    async def get(self, notebook_id: str, request_options: Optional[RequestOptions] = None) -> NotebookType:
+        return await self._client.notebook.get(self.instance_id, notebook_id, request_options=request_options)
 
-    async def delete(
-        self, notebook_id: str, request_options: Optional[RequestOptions] = None
-    ) -> None:
-        await self._client.notebook.delete(
-            self.instance_id, notebook_id, request_options=request_options
-        )
+    async def delete(self, notebook_id: str, request_options: Optional[RequestOptions] = None) -> None:
+        await self._client.notebook.delete(self.instance_id, notebook_id, request_options=request_options)
 
     async def add_cell(
         self,
@@ -487,19 +420,13 @@ class Env:
         variables: Dict[str, str],
         request_options: Optional[RequestOptions] = None,
     ) -> EnvResponse:
-        return self._client.env.set(
-            self.instance_id, variables=variables, request_options=request_options
-        )
+        return self._client.env.set(self.instance_id, variables=variables, request_options=request_options)
 
     def get(self, request_options: Optional[RequestOptions] = None) -> EnvGetResponse:
         return self._client.env.get(self.instance_id, request_options=request_options)
 
-    def delete(
-        self, *, keys: Sequence[str], request_options: Optional[RequestOptions] = None
-    ) -> EnvResponse:
-        return self._client.env.delete(
-            self.instance_id, keys=keys, request_options=request_options
-        )
+    def delete(self, *, keys: Sequence[str], request_options: Optional[RequestOptions] = None) -> EnvResponse:
+        return self._client.env.delete(self.instance_id, keys=keys, request_options=request_options)
 
 
 class AsyncEnv:
@@ -513,23 +440,13 @@ class AsyncEnv:
         variables: Dict[str, str],
         request_options: Optional[RequestOptions] = None,
     ) -> EnvResponse:
-        return await self._client.env.set(
-            self.instance_id, variables=variables, request_options=request_options
-        )
+        return await self._client.env.set(self.instance_id, variables=variables, request_options=request_options)
 
-    async def get(
-        self, request_options: Optional[RequestOptions] = None
-    ) -> EnvGetResponse:
-        return await self._client.env.get(
-            self.instance_id, request_options=request_options
-        )
+    async def get(self, request_options: Optional[RequestOptions] = None) -> EnvGetResponse:
+        return await self._client.env.get(self.instance_id, request_options=request_options)
 
-    async def delete(
-        self, *, keys: Sequence[str], request_options: Optional[RequestOptions] = None
-    ) -> EnvResponse:
-        return await self._client.env.delete(
-            self.instance_id, keys=keys, request_options=request_options
-        )
+    async def delete(self, *, keys: Sequence[str], request_options: Optional[RequestOptions] = None) -> EnvResponse:
+        return await self._client.env.delete(self.instance_id, keys=keys, request_options=request_options)
 
 
 class BaseInstance:
@@ -545,19 +462,11 @@ class BaseInstance:
         self.status = status
         self._client = client
 
-    def screenshot(
-        self, request_options: Optional[RequestOptions] = None
-    ) -> InstanceScreenshotResponse:
-        return self._client.instance.screenshot(
-            self.id, request_options=request_options
-        )
+    def screenshot(self, request_options: Optional[RequestOptions] = None) -> InstanceScreenshotResponse:
+        return self._client.instance.screenshot(self.id, request_options=request_options)
 
-    def get_stream_url(
-        self, request_options: Optional[RequestOptions] = None
-    ) -> InstanceGetStreamUrlResponse:
-        return self._client.instance.get_stream_url(
-            self.id, request_options=request_options
-        )
+    def get_stream_url(self, request_options: Optional[RequestOptions] = None) -> InstanceGetStreamUrlResponse:
+        return self._client.instance.get_stream_url(self.id, request_options=request_options)
 
     @overload
     def computer(
@@ -758,9 +667,9 @@ class BaseInstance:
         request_options: Optional[RequestOptions] = None,
     ) -> ComputerResponse:
         """Control computer actions like mouse movements, clicks, and keyboard input.
-        
+
         This method supports two ways of specifying actions:
-        
+
         1. Using action objects (recommended):
            ```python
            click_action = ClickMouseAction(
@@ -769,7 +678,7 @@ class BaseInstance:
            )
            instance.computer(action=click_action)
            ```
-        
+
         2. Using string action types with parameters (legacy):
            ```python
            instance.computer(
@@ -778,7 +687,7 @@ class BaseInstance:
                coordinates=[500, 500]
            )
            ```
-        
+
         Args:
             action: Either a string action type or an action object
             button: The mouse button to use (for click actions)
@@ -793,7 +702,7 @@ class BaseInstance:
             text: Text to type
             duration: Duration for wait actions
             request_options: Options for the request
-            
+
         Returns:
             ComputerResponse: Response from the action
         """
@@ -801,7 +710,7 @@ class BaseInstance:
 
         # Check if action is an action object
         request = _create_request_from_action(action)
-        
+
         # If it wasn't an object or the object wasn't recognized, use the legacy string-based approach
         if request is None:
             if action == "move_mouse":
@@ -842,14 +751,10 @@ class BaseInstance:
             request_options=request_options,
         )
 
-    def stop(
-        self, request_options: Optional[RequestOptions] = None
-    ) -> StopInstanceResponse:
+    def stop(self, request_options: Optional[RequestOptions] = None) -> StopInstanceResponse:
         return self._client.instance.stop(self.id, request_options=request_options)
 
-    def pause(
-        self, request_options: Optional[RequestOptions] = None
-    ) -> StopInstanceResponse:
+    def pause(self, request_options: Optional[RequestOptions] = None) -> StopInstanceResponse:
         return self._client.instance.pause(self.id, request_options=request_options)
 
     def resume(
@@ -890,13 +795,13 @@ class UbuntuInstance(BaseInstance):
         request_options: Optional[RequestOptions] = None,
     ) -> Optional[Any]:
         return self._client.instance.bash(
-            self.id, 
-            command=command, 
-            session=session, 
-            restart=restart, 
-            list_sessions=list_sessions, 
-            check_session=check_session, 
-            request_options=request_options
+            self.id,
+            command=command,
+            session=session,
+            restart=restart,
+            list_sessions=list_sessions,
+            check_session=check_session,
+            request_options=request_options,
         )
 
     def edit(
@@ -922,7 +827,7 @@ class UbuntuInstance(BaseInstance):
             insert_line=insert_line,
             request_options=request_options,
         )
-    
+
     def file(
         self,
         *,
@@ -966,9 +871,9 @@ class UbuntuInstance(BaseInstance):
             pattern=pattern,
             case_sensitive=case_sensitive,
             line_numbers=line_numbers,
-            request_options=request_options
+            request_options=request_options,
         )
-    
+
     def upload(
         self,
         *,
@@ -982,7 +887,8 @@ class UbuntuInstance(BaseInstance):
             path=path,
             request_options=request_options,
         )
-    
+
+
 class BrowserInstance(BaseInstance):
     def __init__(
         self,
@@ -993,19 +899,11 @@ class BrowserInstance(BaseInstance):
     ):
         super().__init__(id, launch_time, status, client)
 
-    def get_cdp_url(
-        self, request_options: Optional[RequestOptions] = None
-    ) -> BrowserGetCdpUrlResponse:
-        return self._client.browser.get_cdp_url(
-            self.id, request_options=request_options
-        )
-    
-    def get_current_url(
-        self, request_options: Optional[RequestOptions] = None
-    ) -> BrowserGetCurrentUrlResponse:
-        return self._client.browser.get_current_url(
-            self.id, request_options=request_options
-        )
+    def get_cdp_url(self, request_options: Optional[RequestOptions] = None) -> BrowserGetCdpUrlResponse:
+        return self._client.browser.get_cdp_url(self.id, request_options=request_options)
+
+    def get_current_url(self, request_options: Optional[RequestOptions] = None) -> BrowserGetCurrentUrlResponse:
+        return self._client.browser.get_current_url(self.id, request_options=request_options)
 
     def save_auth(
         self,
@@ -1013,9 +911,7 @@ class BrowserInstance(BaseInstance):
         name: Optional[str] = None,
         request_options: Optional[RequestOptions] = None,
     ) -> SaveBrowserAuthResponse:
-        return self._client.browser.save_auth(
-            self.id, name=name, request_options=request_options
-        )
+        return self._client.browser.save_auth(self.id, name=name, request_options=request_options)
 
     def modify_auth(
         self,
@@ -1065,19 +961,11 @@ class AsyncBaseInstance:
         self.status = status
         self._client = client
 
-    async def screenshot(
-        self, request_options: Optional[RequestOptions] = None
-    ) -> InstanceScreenshotResponse:
-        return await self._client.instance.screenshot(
-            self.id, request_options=request_options
-        )
+    async def screenshot(self, request_options: Optional[RequestOptions] = None) -> InstanceScreenshotResponse:
+        return await self._client.instance.screenshot(self.id, request_options=request_options)
 
-    async def get_stream_url(
-        self, request_options: Optional[RequestOptions] = None
-    ) -> InstanceGetStreamUrlResponse:
-        return await self._client.instance.get_stream_url(
-            self.id, request_options=request_options
-        )
+    async def get_stream_url(self, request_options: Optional[RequestOptions] = None) -> InstanceGetStreamUrlResponse:
+        return await self._client.instance.get_stream_url(self.id, request_options=request_options)
 
     @overload
     async def computer(
@@ -1278,9 +1166,9 @@ class AsyncBaseInstance:
         request_options: Optional[RequestOptions] = None,
     ) -> ComputerResponse:
         """Control computer actions like mouse movements, clicks, and keyboard input.
-        
+
         This method supports two ways of specifying actions:
-        
+
         1. Using action objects (recommended):
            ```python
            click_action = ClickMouseAction(
@@ -1289,7 +1177,7 @@ class AsyncBaseInstance:
            )
            await instance.computer(action=click_action)
            ```
-        
+
         2. Using string action types with parameters (legacy):
            ```python
            await instance.computer(
@@ -1298,7 +1186,7 @@ class AsyncBaseInstance:
                coordinates=[500, 500]
            )
            ```
-        
+
         Args:
             action: Either a string action type or an action object
             button: The mouse button to use (for click actions)
@@ -1313,7 +1201,7 @@ class AsyncBaseInstance:
             text: Text to type
             duration: Duration for wait actions
             request_options: Options for the request
-            
+
         Returns:
             ComputerResponse: Response from the action
         """
@@ -1321,7 +1209,7 @@ class AsyncBaseInstance:
 
         # Check if action is an action object
         request = _create_request_from_action(action)
-        
+
         # If it wasn't an object or the object wasn't recognized, use the legacy string-based approach
         if request is None:
             if action == "move_mouse":
@@ -1362,19 +1250,11 @@ class AsyncBaseInstance:
             request_options=request_options,
         )
 
-    async def stop(
-        self, request_options: Optional[RequestOptions] = None
-    ) -> StopInstanceResponse:
-        return await self._client.instance.stop(
-            self.id, request_options=request_options
-        )
+    async def stop(self, request_options: Optional[RequestOptions] = None) -> StopInstanceResponse:
+        return await self._client.instance.stop(self.id, request_options=request_options)
 
-    async def pause(
-        self, request_options: Optional[RequestOptions] = None
-    ) -> StopInstanceResponse:
-        return await self._client.instance.pause(
-            self.id, request_options=request_options
-        )
+    async def pause(self, request_options: Optional[RequestOptions] = None) -> StopInstanceResponse:
+        return await self._client.instance.pause(self.id, request_options=request_options)
 
     async def resume(
         self,
@@ -1414,13 +1294,13 @@ class AsyncUbuntuInstance(AsyncBaseInstance):
         request_options: Optional[RequestOptions] = None,
     ) -> Optional[Any]:
         return await self._client.instance.bash(
-            self.id, 
-            command=command, 
-            session=session, 
-            restart=restart, 
-            list_sessions=list_sessions, 
-            check_session=check_session, 
-            request_options=request_options
+            self.id,
+            command=command,
+            session=session,
+            restart=restart,
+            list_sessions=list_sessions,
+            check_session=check_session,
+            request_options=request_options,
         )
 
     async def edit(
@@ -1446,7 +1326,7 @@ class AsyncUbuntuInstance(AsyncBaseInstance):
             insert_line=insert_line,
             request_options=request_options,
         )
-    
+
     async def file(
         self,
         *,
@@ -1490,9 +1370,9 @@ class AsyncUbuntuInstance(AsyncBaseInstance):
             pattern=pattern,
             case_sensitive=case_sensitive,
             line_numbers=line_numbers,
-            request_options=request_options
+            request_options=request_options,
         )
-        
+
     async def upload(
         self,
         *,
@@ -1506,7 +1386,8 @@ class AsyncUbuntuInstance(AsyncBaseInstance):
             path=path,
             request_options=request_options,
         )
-    
+
+
 class AsyncBrowserInstance(AsyncBaseInstance):
     def __init__(
         self,
@@ -1517,19 +1398,11 @@ class AsyncBrowserInstance(AsyncBaseInstance):
     ):
         super().__init__(id, launch_time, status, client)
 
-    async def get_cdp_url(
-        self, request_options: Optional[RequestOptions] = None
-    ) -> BrowserGetCdpUrlResponse:
-        return await self._client.browser.get_cdp_url(
-            self.id, request_options=request_options
-        )
-    
-    async def get_current_url(
-        self, request_options: Optional[RequestOptions] = None
-    ) -> BrowserGetCurrentUrlResponse:
-        return await self._client.browser.get_current_url(
-            self.id, request_options=request_options
-        )
+    async def get_cdp_url(self, request_options: Optional[RequestOptions] = None) -> BrowserGetCdpUrlResponse:
+        return await self._client.browser.get_cdp_url(self.id, request_options=request_options)
+
+    async def get_current_url(self, request_options: Optional[RequestOptions] = None) -> BrowserGetCurrentUrlResponse:
+        return await self._client.browser.get_current_url(self.id, request_options=request_options)
 
     async def save_auth(
         self,
@@ -1537,9 +1410,7 @@ class AsyncBrowserInstance(AsyncBaseInstance):
         name: Optional[str] = None,
         request_options: Optional[RequestOptions] = None,
     ) -> SaveBrowserAuthResponse:
-        return await self._client.browser.save_auth(
-            self.id, name=name, request_options=request_options
-        )
+        return await self._client.browser.save_auth(self.id, name=name, request_options=request_options)
 
     async def modify_auth(
         self,
@@ -1741,7 +1612,7 @@ class Scrapybara:
         system: Optional[str] = None,
         prompt: Optional[str] = None,
         messages: Optional[List[Message]] = None,
-        schema: Optional[Type[SchemaT]] = None,
+        schema: Optional[Dict[str, Any]] = None,
         on_assistant_message: Optional[Callable[[AssistantMessage], None]] = None,
         on_tool_message: Optional[Callable[[ToolMessage], None]] = None,
         on_step: Optional[Callable[[Step], None]] = None,
@@ -1749,7 +1620,7 @@ class Scrapybara:
         max_tokens: Optional[int] = None,
         images_to_keep: Optional[int] = 4,
         request_options: Optional[RequestOptions] = None,
-    ) -> ActResponse[SchemaT]:
+    ) -> ActResponse:
         """
         Run an agent loop with the given tools and model, returning all messages at the end.
 
@@ -1759,7 +1630,7 @@ class Scrapybara:
             system: System prompt for the agent
             prompt: Initial user prompt
             messages: List of messages to start with
-            schema: Optional Pydantic model class to structure the final output
+            schema: Optional JSON schema to structure the final output
             on_assistant_message: Callback for each assistant message
             on_tool_message: Callback for each tool message
             on_step: Callback for each step of the conversation
@@ -1802,7 +1673,7 @@ class Scrapybara:
                     + (step.reasoning_parts if step.reasoning_parts else [])
                     + (step.tool_calls or [])
                 ),
-                response_id=step.response_id
+                response_id=step.response_id,
             )
             result_messages.append(assistant_msg)
             if step.tool_results:
@@ -1818,10 +1689,8 @@ class Scrapybara:
 
         output = None
         if schema:
-            output = (
-                steps[-1].tool_results[-1].result if steps[-1].tool_results else None
-            )
-            output = schema.model_validate(output)
+            output = steps[-1].tool_results[-1].result if steps[-1].tool_results else None
+            # Валидация ответа модели удалена
 
         usage = None
         if total_tokens > 0:
@@ -1833,9 +1702,7 @@ class Scrapybara:
 
         _filter_images(result_messages, images_to_keep or 4)
 
-        return ActResponse(
-            messages=result_messages, steps=steps, text=text, output=output, usage=usage
-        )
+        return ActResponse(messages=result_messages, steps=steps, text=text, output=output, usage=usage)
 
     def act_stream(
         self,
@@ -1845,7 +1712,7 @@ class Scrapybara:
         system: Optional[str] = None,
         prompt: Optional[str] = None,
         messages: Optional[List[Message]] = None,
-        schema: Optional[Type[BaseModel]] = None,
+        schema: Optional[Dict[str, Any]] = None,
         on_assistant_message: Optional[Callable[[AssistantMessage], None]] = None,
         on_tool_message: Optional[Callable[[ToolMessage], None]] = None,
         on_step: Optional[Callable[[Step], None]] = None,
@@ -1863,7 +1730,7 @@ class Scrapybara:
             system: System prompt for the agent
             prompt: Initial user prompt
             messages: List of messages to start with
-            schema: Optional Pydantic model class to structure the final output
+            schema: Optional JSON schema to structure the final output
             on_assistant_message: Callback for each assistant message
             on_tool_message: Callback for each tool message
             on_step: Callback for each step of the conversation
@@ -1888,9 +1755,7 @@ class Scrapybara:
             if model.name == "ui-tars-72b":
                 computer_tools = [tool for tool in tools if tool.name == "computer"]
                 if not computer_tools:
-                    warnings.warn(
-                        "No compatible tools found for ui-tars-72b model. Only ComputerTool is supported."
-                    )
+                    warnings.warn("No compatible tools found for ui-tars-72b model. Only ComputerTool is supported.")
                 else:
                     current_tools = computer_tools
                     if len(tools) > len(computer_tools):
@@ -1910,24 +1775,26 @@ class Scrapybara:
                 if system is not None:
                     if model.provider == "anthropic":
                         from .anthropic import (
-                            UBUNTU_SYSTEM_PROMPT, 
-                            BROWSER_SYSTEM_PROMPT, 
-                            WINDOWS_SYSTEM_PROMPT, 
-                            STRUCTURED_OUTPUT_SECTION
+                            UBUNTU_SYSTEM_PROMPT,
+                            BROWSER_SYSTEM_PROMPT,
+                            WINDOWS_SYSTEM_PROMPT,
+                            STRUCTURED_OUTPUT_SECTION,
                         )
-                        
+
                         if system in (UBUNTU_SYSTEM_PROMPT, BROWSER_SYSTEM_PROMPT, WINDOWS_SYSTEM_PROMPT):
                             # For Anthropic prompts, add inside the system capability section
-                            system = system.replace("</SYSTEM_CAPABILITY>", f"{STRUCTURED_OUTPUT_SECTION}\n</SYSTEM_CAPABILITY>")
-                    
+                            system = system.replace(
+                                "</SYSTEM_CAPABILITY>", f"{STRUCTURED_OUTPUT_SECTION}\n</SYSTEM_CAPABILITY>"
+                            )
+
                     elif model.provider == "openai":
                         from .openai import (
-                            UBUNTU_SYSTEM_PROMPT, 
-                            BROWSER_SYSTEM_PROMPT, 
-                            WINDOWS_SYSTEM_PROMPT, 
-                            STRUCTURED_OUTPUT_SECTION
+                            UBUNTU_SYSTEM_PROMPT,
+                            BROWSER_SYSTEM_PROMPT,
+                            WINDOWS_SYSTEM_PROMPT,
+                            STRUCTURED_OUTPUT_SECTION,
                         )
-                        
+
                         if system in (UBUNTU_SYSTEM_PROMPT, BROWSER_SYSTEM_PROMPT, WINDOWS_SYSTEM_PROMPT):
                             # For OpenAI prompts, simply append the structured output section
                             system = system + STRUCTURED_OUTPUT_SECTION
@@ -1935,7 +1802,7 @@ class Scrapybara:
         while True:
             # Convert tools to ApiTools
             api_tools = [ApiTool.from_tool(tool) for tool in current_tools]
-            
+
             _filter_images(current_messages, images_to_keep or 4)
 
             request = SingleActRequest(
@@ -1964,25 +1831,13 @@ class Scrapybara:
                 on_assistant_message(act_response.message)
 
             # Extract text from assistant message
-            text = "\n".join(
-                part.text
-                for part in act_response.message.content
-                if isinstance(part, TextPart)
-            )
+            text = "\n".join(part.text for part in act_response.message.content if isinstance(part, TextPart))
 
             # Extract tool calls
-            tool_calls = [
-                part
-                for part in act_response.message.content
-                if isinstance(part, ToolCallPart)
-            ]
+            tool_calls = [part for part in act_response.message.content if isinstance(part, ToolCallPart)]
 
             # Extract reasoning from reasoning part
-            reasoning_parts = [
-                part
-                for part in act_response.message.content
-                if isinstance(part, ReasoningPart)
-            ]
+            reasoning_parts = [part for part in act_response.message.content if isinstance(part, ReasoningPart)]
 
             # Create initial step
             step = Step(
@@ -1991,7 +1846,7 @@ class Scrapybara:
                 tool_calls=tool_calls if tool_calls else None,
                 finish_reason=act_response.finish_reason,
                 usage=act_response.usage,
-                response_id=act_response.message.response_id if act_response.message.response_id else None
+                response_id=act_response.message.response_id if act_response.message.response_id else None,
             )
 
             # Check if there are tool calls
@@ -2125,9 +1980,7 @@ class AsyncScrapybara:
     async def get(
         self, instance_id: str, *, request_options: Optional[RequestOptions] = None
     ) -> Union[AsyncUbuntuInstance, AsyncBrowserInstance, AsyncWindowsInstance]:
-        response = await self._base_client.get(
-            instance_id, request_options=request_options
-        )
+        response = await self._base_client.get(instance_id, request_options=request_options)
         if response.instance_type == "ubuntu":
             return AsyncUbuntuInstance(
                 response.id,
@@ -2155,12 +2008,8 @@ class AsyncScrapybara:
         *,
         request_options: Optional[RequestOptions] = None,
     ) -> List[Union[AsyncUbuntuInstance, AsyncBrowserInstance, AsyncWindowsInstance]]:
-        response = await self._base_client.get_instances(
-            request_options=request_options
-        )
-        instances: List[
-            Union[AsyncUbuntuInstance, AsyncBrowserInstance, AsyncWindowsInstance]
-        ] = []
+        response = await self._base_client.get_instances(request_options=request_options)
+        instances: List[Union[AsyncUbuntuInstance, AsyncBrowserInstance, AsyncWindowsInstance]] = []
         for instance in response:
             if instance.instance_type == "ubuntu":
                 instances.append(
@@ -2196,9 +2045,7 @@ class AsyncScrapybara:
         *,
         request_options: Optional[RequestOptions] = None,
     ) -> List[AuthStateResponse]:
-        response = await self._base_client.get_auth_states(
-            request_options=request_options
-        )
+        response = await self._base_client.get_auth_states(request_options=request_options)
         return [AuthStateResponse(id=state.id, name=state.name) for state in response]
 
     async def act(
@@ -2209,7 +2056,7 @@ class AsyncScrapybara:
         system: Optional[str] = None,
         prompt: Optional[str] = None,
         messages: Optional[List[Message]] = None,
-        schema: Optional[Type[SchemaT]] = None,
+        schema: Optional[Dict[str, Any]] = None,
         on_assistant_message: Optional[Callable[[AssistantMessage], None]] = None,
         on_tool_message: Optional[Callable[[ToolMessage], None]] = None,
         on_step: Optional[Callable[[Step], None]] = None,
@@ -2217,7 +2064,7 @@ class AsyncScrapybara:
         max_tokens: Optional[int] = None,
         images_to_keep: Optional[int] = 4,
         request_options: Optional[RequestOptions] = None,
-    ) -> ActResponse[SchemaT]:
+    ) -> ActResponse:
         """
         Run an agent loop with the given tools and model, returning all messages at the end.
 
@@ -2227,7 +2074,7 @@ class AsyncScrapybara:
             system: System prompt for the agent
             prompt: Initial user prompt
             messages: List of messages to start with
-            schema: Optional Pydantic model class to structure the final output
+            schema: Optional JSON schema to structure the final output
             on_assistant_message: Callback for each assistant message
             on_tool_message: Callback for each tool message
             on_step: Callback for each step of the conversation
@@ -2270,7 +2117,7 @@ class AsyncScrapybara:
                     + (step.reasoning_parts if step.reasoning_parts else [])
                     + (step.tool_calls or [])
                 ),
-                response_id=step.response_id
+                response_id=step.response_id,
             )
             result_messages.append(assistant_msg)
             if step.tool_results:
@@ -2286,10 +2133,8 @@ class AsyncScrapybara:
 
         output = None
         if schema:
-            output = (
-                steps[-1].tool_results[-1].result if steps[-1].tool_results else None
-            )
-            output = schema.model_validate(output)
+            output = steps[-1].tool_results[-1].result if steps[-1].tool_results else None
+            # Валидация ответа модели удалена
 
         usage = None
         if total_tokens > 0:
@@ -2301,9 +2146,7 @@ class AsyncScrapybara:
 
         _filter_images(result_messages, images_to_keep or 4)
 
-        return ActResponse(
-            messages=result_messages, steps=steps, text=text, output=output, usage=usage
-        )
+        return ActResponse(messages=result_messages, steps=steps, text=text, output=output, usage=usage)
 
     async def act_stream(
         self,
@@ -2313,7 +2156,7 @@ class AsyncScrapybara:
         system: Optional[str] = None,
         prompt: Optional[str] = None,
         messages: Optional[List[Message]] = None,
-        schema: Optional[Type[SchemaT]] = None,
+        schema: Optional[Dict[str, Any]] = None,
         on_assistant_message: Optional[Callable[[AssistantMessage], None]] = None,
         on_tool_message: Optional[Callable[[ToolMessage], None]] = None,
         on_step: Optional[Callable[[Step], None]] = None,
@@ -2331,7 +2174,7 @@ class AsyncScrapybara:
             system: System prompt for the agent
             prompt: Initial user prompt
             messages: List of messages to start with
-            schema: Optional Pydantic model class to structure the final output
+            schema: Optional JSON schema to structure the final output
             on_assistant_message: Callback for each assistant message
             on_tool_message: Callback for each tool message
             on_step: Callback for each step of the conversation
@@ -2356,9 +2199,7 @@ class AsyncScrapybara:
             if model.name == "ui-tars-72b":
                 computer_tools = [tool for tool in tools if tool.name == "computer"]
                 if not computer_tools:
-                    warnings.warn(
-                        "No compatible tools found for ui-tars-72b model. Only ComputerTool is supported."
-                    )
+                    warnings.warn("No compatible tools found for ui-tars-72b model. Only ComputerTool is supported.")
                 else:
                     current_tools = computer_tools
                     if len(tools) > len(computer_tools):
@@ -2378,24 +2219,26 @@ class AsyncScrapybara:
                 if system is not None:
                     if model.provider == "anthropic":
                         from .anthropic import (
-                            UBUNTU_SYSTEM_PROMPT, 
-                            BROWSER_SYSTEM_PROMPT, 
-                            WINDOWS_SYSTEM_PROMPT, 
-                            STRUCTURED_OUTPUT_SECTION
+                            UBUNTU_SYSTEM_PROMPT,
+                            BROWSER_SYSTEM_PROMPT,
+                            WINDOWS_SYSTEM_PROMPT,
+                            STRUCTURED_OUTPUT_SECTION,
                         )
-                        
+
                         if system in (UBUNTU_SYSTEM_PROMPT, BROWSER_SYSTEM_PROMPT, WINDOWS_SYSTEM_PROMPT):
                             # For Anthropic prompts, add inside the system capability section
-                            system = system.replace("</SYSTEM_CAPABILITY>", f"{STRUCTURED_OUTPUT_SECTION}\n</SYSTEM_CAPABILITY>")
-                    
+                            system = system.replace(
+                                "</SYSTEM_CAPABILITY>", f"{STRUCTURED_OUTPUT_SECTION}\n</SYSTEM_CAPABILITY>"
+                            )
+
                     elif model.provider == "openai":
                         from .openai import (
-                            UBUNTU_SYSTEM_PROMPT, 
-                            BROWSER_SYSTEM_PROMPT, 
-                            WINDOWS_SYSTEM_PROMPT, 
-                            STRUCTURED_OUTPUT_SECTION
+                            UBUNTU_SYSTEM_PROMPT,
+                            BROWSER_SYSTEM_PROMPT,
+                            WINDOWS_SYSTEM_PROMPT,
+                            STRUCTURED_OUTPUT_SECTION,
                         )
-                        
+
                         if system in (UBUNTU_SYSTEM_PROMPT, BROWSER_SYSTEM_PROMPT, WINDOWS_SYSTEM_PROMPT):
                             # For OpenAI prompts, simply append the structured output section
                             system = system + STRUCTURED_OUTPUT_SECTION
@@ -2434,25 +2277,13 @@ class AsyncScrapybara:
                     await result
 
             # Extract text from assistant message
-            text = "\n".join(
-                part.text
-                for part in act_response.message.content
-                if isinstance(part, TextPart)
-            )
+            text = "\n".join(part.text for part in act_response.message.content if isinstance(part, TextPart))
 
             # Extract tool calls
-            tool_calls = [
-                part
-                for part in act_response.message.content
-                if isinstance(part, ToolCallPart)
-            ]
+            tool_calls = [part for part in act_response.message.content if isinstance(part, ToolCallPart)]
 
             # Extract reasoning from reasoning part
-            reasoning_parts = [
-                part
-                for part in act_response.message.content
-                if isinstance(part, ReasoningPart)
-            ]
+            reasoning_parts = [part for part in act_response.message.content if isinstance(part, ReasoningPart)]
 
             # Create initial step
             step = Step(
@@ -2461,7 +2292,7 @@ class AsyncScrapybara:
                 tool_calls=tool_calls if tool_calls else None,
                 finish_reason=act_response.finish_reason,
                 usage=act_response.usage,
-                response_id=act_response.message.response_id if act_response.message.response_id else None
+                response_id=act_response.message.response_id if act_response.message.response_id else None,
             )
 
             # Check if there are tool calls
@@ -2513,13 +2344,12 @@ class AsyncScrapybara:
             if not has_tool_calls or has_structured_output:
                 break
 
+
 def _create_request_from_action(action):
     """Helper function to create a request object from an action object."""
     if isinstance(action, MoveMouseAction):
         return Request_MoveMouse(
-            coordinates=action.coordinates, 
-            hold_keys=action.hold_keys,
-            screenshot=action.screenshot
+            coordinates=action.coordinates, hold_keys=action.hold_keys, screenshot=action.screenshot
         )
     elif isinstance(action, ClickMouseAction):
         return Request_ClickMouse(
@@ -2528,39 +2358,24 @@ def _create_request_from_action(action):
             coordinates=action.coordinates,
             num_clicks=action.num_clicks,
             hold_keys=action.hold_keys,
-            screenshot=action.screenshot
+            screenshot=action.screenshot,
         )
     elif isinstance(action, DragMouseAction):
-        return Request_DragMouse(
-            path=action.path, 
-            hold_keys=action.hold_keys,
-            screenshot=action.screenshot
-        )
+        return Request_DragMouse(path=action.path, hold_keys=action.hold_keys, screenshot=action.screenshot)
     elif isinstance(action, ScrollAction):
         return Request_Scroll(
             coordinates=action.coordinates,
             delta_x=action.delta_x,
             delta_y=action.delta_y,
             hold_keys=action.hold_keys,
-            screenshot=action.screenshot
+            screenshot=action.screenshot,
         )
     elif isinstance(action, PressKeyAction):
-        return Request_PressKey(
-            keys=action.keys, 
-            duration=action.duration,
-            screenshot=action.screenshot
-        )
+        return Request_PressKey(keys=action.keys, duration=action.duration, screenshot=action.screenshot)
     elif isinstance(action, TypeTextAction):
-        return Request_TypeText(
-            text=action.text, 
-            hold_keys=action.hold_keys,
-            screenshot=action.screenshot
-        )
+        return Request_TypeText(text=action.text, hold_keys=action.hold_keys, screenshot=action.screenshot)
     elif isinstance(action, WaitAction):
-        return Request_Wait(
-            duration=action.duration,
-            screenshot=action.screenshot
-        )
+        return Request_Wait(duration=action.duration, screenshot=action.screenshot)
     elif isinstance(action, TakeScreenshotAction):
         return Request_TakeScreenshot()
     elif isinstance(action, GetCursorPositionAction):
@@ -2568,29 +2383,31 @@ def _create_request_from_action(action):
     else:
         return None
 
+
 def _filter_images(messages: List[Message], images_to_keep: int):
     """
     Helper function to filter base64 images in messages, keeping only the latest ones up to specified limit.
-    
+
     Args:
         messages: List of messages to filter
         images_to_keep: Maximum number of images to keep
     """
     images_kept = 0
-    
+
     for i in range(len(messages) - 1, -1, -1):
         msg = messages[i]
-        
+
         if isinstance(msg, ToolMessage) and msg.content:
             for j in range(len(msg.content) - 1, -1, -1):
                 tool_result = msg.content[j]
-                
-                if (tool_result and 
-                    hasattr(tool_result, "result") and 
-                    tool_result.result and 
-                    isinstance(tool_result.result, dict) and
-                    "base_64_image" in tool_result.result):
-                    
+
+                if (
+                    tool_result
+                    and hasattr(tool_result, "result")
+                    and tool_result.result
+                    and isinstance(tool_result.result, dict)
+                    and "base_64_image" in tool_result.result
+                ):
                     if images_kept < images_to_keep:
                         images_kept += 1
                     else:
